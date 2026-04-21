@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
 from sqlalchemy.sql import func
 
 from app.database import Base
@@ -14,6 +14,8 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     
     hashed_password = Column(String(255), nullable=False)
+
+    resume_text = Column(Text, nullable=True) 
     
     is_active = Column(Boolean, default=True)
     
