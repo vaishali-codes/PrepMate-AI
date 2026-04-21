@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from app.database import get_db
 from app.models.user import User
 from app.auth import get_current_user
-from app.services.interview import get_ai_response
+from app.services.interview import get_ai_response, get_interview_summary
 
 router = APIRouter(
     prefix="/interview",
@@ -85,3 +85,33 @@ def get_history(
         return {"history": []}
 
     return {"history": sessions[current_user.id]}
+
+
+@router.post("/end")
+def end_interview(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.id not in sessions:
+        raise HTTPException(
+            status_code=400,
+            detail="No active interview session found."
+        )
+
+    history = sessions[current_user.id]
+
+    if len(history) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="Interview too short to summarize. Answer at least one question."
+        )
+
+    summary = get_interview_summary(current_user.resume_text, history)
+
+    del sessions[current_user.id]
+
+    return {
+        "message": "Interview completed!",
+        "questions_asked": len([m for m in history if m["role"] == "assistant"]),
+        "summary": summary
+    }

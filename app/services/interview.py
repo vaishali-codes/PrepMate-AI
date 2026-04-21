@@ -42,3 +42,35 @@ def get_ai_response(resume_text: str, conversation_history: list) -> str:
     )
 
     return response.choices[0].message.content
+
+
+def get_interview_summary(resume_text: str, conversation_history: list) -> str:
+    messages = [
+        {
+            "role": "system",
+            "content": """You are PrepMate, an expert interview coach.
+            You have just completed a mock interview with a candidate.
+            Review the entire conversation and provide a structured performance report with:
+
+            1. **Overall Score** (X/10)
+            2. **Strengths** (2-3 bullet points)
+            3. **Areas for Improvement** (2-3 bullet points)
+            4. **Best Answer** (which question they answered best and why)
+            5. **Final Tip** (one actionable tip for their next interview)
+
+            Be honest, specific, and encouraging."""
+        },
+        {
+            "role": "user",
+            "content": f"Here is the candidate's resume:\n{resume_text}\n\nHere is the full interview conversation:\n{str(conversation_history)}\n\nPlease provide the performance summary."
+        }
+    ]
+
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=messages,
+        temperature=0.7,
+        max_tokens=800
+    )
+
+    return response.choices[0].message.content
