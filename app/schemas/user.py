@@ -14,7 +14,7 @@ class UserLogin(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
-    full_name: str
+    full_name: Optional[str] = None
     email: str
     is_active: bool
     created_at: datetime
