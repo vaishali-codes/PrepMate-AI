@@ -165,3 +165,51 @@ def end_interview(
         "session_id": session.id,
         "summary": summary
     }
+
+
+@router.get("/sessions")
+def get_all_sessions(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    sessions = db.query(InterviewSession).filter(
+        InterviewSession.user_id == current_user.id
+    ).order_by(InterviewSession.created_at.desc()).all()
+
+    return {
+        "total": len(sessions),
+        "sessions": [
+            {
+                "session_id": s.id,
+                "status": s.status,
+                "created_at": s.created_at,
+                "ended_at": s.ended_at,
+                "has_summary": s.summary is not None
+            }
+            for s in sessions
+        ]
+    }
+
+
+@router.get("/sessions/{session_id}")
+def get_session_detail(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    session = db.query(InterviewSession).filter(
+        InterviewSession.id == session_id,
+        InterviewSession.user_id == current_user.id
+    ).first()
+
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found.")
+
+    return {
+        "session_id": session.id,
+        "status": session.status,
+        "created_at": session.created_at,
+        "ended_at": session.ended_at,
+        "summary": session.summary,
+        "messages": build_conversation_history(session)
+    }

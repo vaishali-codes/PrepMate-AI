@@ -36,3 +36,9 @@ end = requests.post(f"{BASE}/interview/end", headers=headers, json={
 print("END status:", end.status_code)
 print("END raw:", end.text)
 print("END:", end.json())
+
+all_sessions = requests.get(f"{BASE}/interview/sessions", headers=headers)
+print("ALL SESSIONS:", all_sessions.json())
+
+detail = requests.get(f"{BASE}/interview/sessions/{SESSION_ID}", headers=headers)
+print("SESSION DETAIL:", detail.json())
