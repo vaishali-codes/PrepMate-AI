@@ -32,8 +32,12 @@ export default function Login() {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.title}>PrepMate AI</h1>
-        <p style={styles.subtitle}>AI-powered Mock Interviewer</p>
+        <div style={styles.brandSection}>
+          <div style={styles.logo}>🎯</div>
+          <h1 style={styles.title}>PrepMate AI</h1>
+          <p style={styles.subtitle}>AI-powered Mock Interviewer</p>
+        </div>
+
         <h2 style={styles.heading}>{isRegister ? 'Register' : 'Login'}</h2>
 
         <input
@@ -71,9 +75,11 @@ export default function Login() {
 const styles = {
   container: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f4f8' },
   card: { background: 'white', padding: '40px', borderRadius: '12px', width: '360px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' },
-  title: { textAlign: 'center', color: '#2563eb', margin: '0 0 4px 0' },       // ← added bottom margin
-  subtitle: { textAlign: 'center', color: '#64748b', marginBottom: '24px', marginTop: '4px' },  // ← added top margin
-  heading: { textAlign: 'center', marginBottom: '20px', marginTop: '0' },
+  brandSection: { textAlign: 'center', marginBottom: '24px' },
+  logo: { fontSize: '40px', marginBottom: '8px' },
+  title: { color: '#2563eb', margin: '0 0 6px 0', fontSize: '24px', fontWeight: '700' },
+  subtitle: { color: '#64748b', margin: '0', fontSize: '14px' },
+  heading: { textAlign: 'center', marginBottom: '20px', marginTop: '0', fontSize: '18px', color: '#1e293b' },
   input: { width: '100%', padding: '10px', marginBottom: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', boxSizing: 'border-box' },
   button: { width: '100%', padding: '12px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', cursor: 'pointer' },
   error: { color: 'red', fontSize: '13px', marginBottom: '10px' },
