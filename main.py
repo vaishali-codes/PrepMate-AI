@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 
@@ -19,6 +20,14 @@ app = FastAPI(
     description="AI-powered mock interviewer",
     version="1.0.0",
     swagger_ui_init_oauth={},
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(auth_router)

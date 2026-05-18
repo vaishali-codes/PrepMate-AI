@@ -135,7 +135,6 @@ def end_interview(
     db: Session = Depends(get_db)
 ):
     session_id = payload.get("session_id")
-
     if not session_id:
         raise HTTPException(status_code=400, detail="session_id is required.")
 
@@ -143,19 +142,28 @@ def end_interview(
         InterviewSession.id == session_id,
         InterviewSession.user_id == current_user.id
     ).first()
-
     if not session:
         raise HTTPException(status_code=404, detail="Session not found.")
 
     if session.status == "ended":
         raise HTTPException(status_code=400, detail="Session already ended.")
 
+    message_count = db.query(InterviewMessage).filter(
+        InterviewMessage.session_id == session_id,
+        InterviewMessage.role == "user"
+    ).count()
+    if message_count == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Please answer at least one question before ending the interview."
+        )
+
     history = build_conversation_history(session)
     summary = get_interview_summary(
         resume_text=session.resume_text,
         conversation_history=history
     )
-    score = extract_score(summary) 
+    score = extract_score(summary)
     session.status = "ended"
     session.summary = summary
     session.score = score
