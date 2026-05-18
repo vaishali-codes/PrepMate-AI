@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: '/api'
+  baseURL: 'https://prepmate-ai-d7n6.onrender.com'
 })
 
 api.interceptors.request.use((config) => {
