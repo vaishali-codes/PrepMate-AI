@@ -71,9 +71,9 @@ export default function Login() {
 const styles = {
   container: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f4f8' },
   card: { background: 'white', padding: '40px', borderRadius: '12px', width: '360px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' },
-  title: { textAlign: 'center', color: '#2563eb', margin: 0 },
-  subtitle: { textAlign: 'center', color: '#64748b', marginBottom: '24px' },
-  heading: { textAlign: 'center', marginBottom: '20px' },
+  title: { textAlign: 'center', color: '#2563eb', margin: '0 0 4px 0' },       // ← added bottom margin
+  subtitle: { textAlign: 'center', color: '#64748b', marginBottom: '24px', marginTop: '4px' },  // ← added top margin
+  heading: { textAlign: 'center', marginBottom: '20px', marginTop: '0' },
   input: { width: '100%', padding: '10px', marginBottom: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', boxSizing: 'border-box' },
   button: { width: '100%', padding: '12px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', cursor: 'pointer' },
   error: { color: 'red', fontSize: '13px', marginBottom: '10px' },
