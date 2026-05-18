@@ -10,51 +10,66 @@ export default function Summary() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    const fetchSession = async () => {
+    const fetch = async () => {
       try {
         const res = await getSessionDetail(sessionId)
         setSession(res.data)
-      } catch (err) {
+      } catch {
         alert('Failed to load summary.')
       }
       setLoading(false)
     }
-    fetchSession()
+    fetch()
   }, [sessionId])
 
-  const getScoreColor = (score) => {
-    if (score >= 8) return '#16a34a'
+  const scoreColor = (score) => {
+    if (score >= 8) return '#15803d'
     if (score >= 5) return '#d97706'
     return '#ef4444'
+  }
+
+  const scoreLabel = (score) => {
+    if (score >= 8) return 'Excellent'
+    if (score >= 5) return 'Average'
+    return 'Needs work'
   }
 
   if (loading) return <div style={styles.center}>Loading summary...</div>
   if (!session) return <div style={styles.center}>Session not found.</div>
 
   return (
-    <div>
+    <div style={{ background: '#f8fafc', minHeight: '100vh' }}>
       <Navbar />
-      <div style={styles.container}>
+      <div style={styles.page}>
         <div style={styles.card}>
-          <h1 style={styles.title}>Interview Complete! 🎉</h1>
+          <h2 style={styles.title}>Interview complete</h2>
 
           {session.score !== null && (
-            <div style={styles.scoreBox}>
-              <p style={styles.scoreLabel}>Your Score</p>
-              <p style={{ ...styles.score, color: getScoreColor(session.score) }}>
-                {session.score}/10
-              </p>
+            <div style={styles.scoreCard}>
+              <div style={styles.scoreCircle}>
+                <span style={{ ...styles.scoreNum, color: scoreColor(session.score) }}>{session.score}</span>
+                <span style={styles.scoreDen}>/10</span>
+              </div>
+              <div>
+                <p style={{ ...styles.scoreTag, color: scoreColor(session.score) }}>{scoreLabel(session.score)}</p>
+                <p style={styles.scoreDesc}>Overall performance score</p>
+              </div>
             </div>
           )}
 
-          <div style={styles.summaryBox}>
-            <h3 style={styles.summaryTitle}>Performance Summary</h3>
+          <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>Performance summary</h3>
             <p style={styles.summaryText}>{session.summary}</p>
           </div>
 
-          <button style={styles.primaryBtn} onClick={() => navigate('/upload')}>
-            Start New Interview
-          </button>
+          <div style={styles.btnRow}>
+            <button style={styles.primaryBtn} onClick={() => navigate('/upload')}>
+              Start new interview
+            </button>
+            <button style={styles.secondaryBtn} onClick={() => navigate('/history')}>
+              View history
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -62,15 +77,20 @@ export default function Summary() {
 }
 
 const styles = {
-  center: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' },
-  container: { padding: '40px 20px', background: '#f0f4f8', minHeight: '100vh' },
-  card: { maxWidth: '700px', margin: '0 auto', background: 'white', borderRadius: '16px', padding: '40px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' },
-  title: { textAlign: 'center', color: '#2563eb', marginBottom: '24px' },
-  scoreBox: { textAlign: 'center', marginBottom: '32px', padding: '24px', background: '#f8fafc', borderRadius: '12px' },
-  scoreLabel: { fontSize: '16px', color: '#64748b', margin: '0 0 8px' },
-  score: { fontSize: '64px', fontWeight: 'bold', margin: 0 },
-  summaryBox: { background: '#f8fafc', borderRadius: '12px', padding: '24px', marginBottom: '24px' },
-  summaryTitle: { margin: '0 0 12px', color: '#1e293b' },
-  summaryText: { whiteSpace: 'pre-wrap', lineHeight: '1.7', color: '#334155', margin: 0 },
-  primaryBtn: { width: '100%', padding: '12px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', cursor: 'pointer' },
+  center: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: '#64748b' },
+  page: { padding: '40px 24px', maxWidth: '720px', margin: '0 auto' },
+  card: { background: 'white', borderRadius: '16px', padding: '40px', border: '0.5px solid #e2e8f0' },
+  title: { fontSize: '20px', fontWeight: '600', color: '#0f172a', marginBottom: '24px' },
+  scoreCard: { display: 'flex', alignItems: 'center', gap: '24px', padding: '24px', background: '#f8fafc', borderRadius: '12px', border: '0.5px solid #e2e8f0', marginBottom: '28px' },
+  scoreCircle: { display: 'flex', alignItems: 'baseline', gap: '2px' },
+  scoreNum: { fontSize: '56px', fontWeight: '700', lineHeight: 1 },
+  scoreDen: { fontSize: '20px', color: '#94a3b8', fontWeight: '400' },
+  scoreTag: { fontSize: '16px', fontWeight: '600', margin: '0 0 4px' },
+  scoreDesc: { fontSize: '13px', color: '#94a3b8', margin: 0 },
+  section: { background: '#f8fafc', borderRadius: '12px', padding: '24px', marginBottom: '24px', border: '0.5px solid #e2e8f0' },
+  sectionTitle: { fontSize: '13px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '12px' },
+  summaryText: { whiteSpace: 'pre-wrap', lineHeight: '1.75', color: '#334155', fontSize: '14px', margin: 0 },
+  btnRow: { display: 'flex', gap: '12px' },
+  primaryBtn: { flex: 1, padding: '11px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' },
+  secondaryBtn: { flex: 1, padding: '11px', background: 'white', color: '#475569', border: '0.5px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', cursor: 'pointer' }
 }
