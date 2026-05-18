@@ -1,5 +1,6 @@
 from groq import Groq
 from app.config import settings
+import re
 
 client = Groq(api_key=settings.GROQ_API_KEY)
 
@@ -74,3 +75,14 @@ def get_interview_summary(resume_text: str, conversation_history: list) -> str:
     )
 
     return response.choices[0].message.content
+
+
+def extract_score(summary: str) -> int | None:
+    # Looks for patterns like "Score: 7/10" or "Score: 7 /10" or "score: 7/10"
+    match = re.search(r'[Ss]core[:\s]+(\d+)\s*/\s*10', summary)
+    if match:
+        score = int(match.group(1))
+        # Make sure score is between 1 and 10
+        if 1 <= score <= 10:
+            return score
+    return None

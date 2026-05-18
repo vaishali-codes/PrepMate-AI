@@ -12,6 +12,7 @@ class InterviewSession(Base):
     resume_text = Column(Text, nullable=True)
     status = Column(String(20), default="active", nullable=False)
     summary = Column(Text, nullable=True)
+    score = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     ended_at = Column(DateTime(timezone=True), nullable=True)
 

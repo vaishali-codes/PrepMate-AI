@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from app.auth import get_current_user
 from app.database import get_db
 from app.models.user import User
-from app.services.interview import get_ai_response, get_interview_summary
+from app.services.interview import get_ai_response, get_interview_summary, extract_score
 
 from app.models.interview import InterviewSession, InterviewMessage
 
@@ -155,14 +155,16 @@ def end_interview(
         resume_text=session.resume_text,
         conversation_history=history
     )
-
+    score = extract_score(summary) 
     session.status = "ended"
     session.summary = summary
+    session.score = score
     session.ended_at = datetime.now(timezone.utc)
     db.commit()
 
     return {
         "session_id": session.id,
+        "score": score,
         "summary": summary
     }
 
@@ -182,6 +184,7 @@ def get_all_sessions(
             {
                 "session_id": s.id,
                 "status": s.status,
+                "score": s.score,
                 "created_at": s.created_at,
                 "ended_at": s.ended_at,
                 "has_summary": s.summary is not None
@@ -208,6 +211,7 @@ def get_session_detail(
     return {
         "session_id": session.id,
         "status": session.status,
+        "score": session.score,
         "created_at": session.created_at,
         "ended_at": session.ended_at,
         "summary": session.summary,
