@@ -19,7 +19,7 @@ async def upload_resume(
     current_user: User = Depends(get_current_user)
 ):
 
-    if file.content_type != "application/pdf":
+    if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are accepted.")
 
     contents = await file.read()

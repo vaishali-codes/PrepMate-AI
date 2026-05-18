@@ -1,117 +1,167 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from datetime import datetime, timezone
 
+from app.auth import get_current_user
 from app.database import get_db
 from app.models.user import User
-from app.auth import get_current_user
 from app.services.interview import get_ai_response, get_interview_summary
 
-router = APIRouter(
-    prefix="/interview",
-    tags=["Interview"]
-)
-sessions = {}
+from app.models.interview import InterviewSession, InterviewMessage
+
+router = APIRouter(prefix="/interview", tags=["interview"])
 
 
-class AnswerRequest(BaseModel):
-    message: str
+def build_conversation_history(session: InterviewSession) -> list:
+    return [
+        {"role": msg.role, "content": msg.content}
+        for msg in session.messages
+    ]
 
 
 @router.post("/start")
 def start_interview(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     if not current_user.resume_text:
-        raise HTTPException(
-            status_code=400,
-            detail="No resume found. Please upload your resume first."
-        )
+        raise HTTPException(status_code=400, detail="Please upload a resume before starting an interview.")
 
-    sessions[current_user.id] = []
+    new_session = InterviewSession(
+        user_id=current_user.id,
+        resume_text=current_user.resume_text,
+        status="active"
+    )
+    db.add(new_session)
+    db.commit()
+    db.refresh(new_session)
 
-    ai_response = get_ai_response(current_user.resume_text, sessions[current_user.id])
+    first_question = get_ai_response(
+        resume_text=current_user.resume_text,
+        conversation_history=[]
+    )
 
-    sessions[current_user.id].append({
-        "role": "assistant",
-        "content": ai_response
-    })
+    ai_message = InterviewMessage(
+        session_id=new_session.id,
+        role="assistant",
+        content=first_question
+    )
+    db.add(ai_message)
+    db.commit()
 
     return {
-        "message": "Interview started!",
-        "ai": ai_response
+        "session_id": new_session.id,
+        "message": first_question
     }
 
 
 @router.post("/answer")
-def answer_question(
-    request: AnswerRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+def submit_answer(
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    if current_user.id not in sessions:
-        raise HTTPException(
-            status_code=400,
-            detail="No active interview session. Please start an interview first."
-        )
+    session_id = payload.get("session_id")
+    answer = payload.get("answer", "").strip()
 
-    if not request.message.strip():
-        raise HTTPException(status_code=400, detail="Answer cannot be empty.")
+    if not session_id or not answer:
+        raise HTTPException(status_code=400, detail="session_id and answer are required.")
 
-    sessions[current_user.id].append({
-        "role": "user",
-        "content": request.message
-    })
+    session = db.query(InterviewSession).filter(
+        InterviewSession.id == session_id,
+        InterviewSession.user_id == current_user.id
+    ).first()
 
-    ai_response = get_ai_response(current_user.resume_text, sessions[current_user.id])
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found.")
 
-    sessions[current_user.id].append({
-        "role": "assistant",
-        "content": ai_response
-    })
+    if session.status == "ended":
+        raise HTTPException(status_code=400, detail="This session has already ended.")
+
+    user_message = InterviewMessage(
+        session_id=session.id,
+        role="user",
+        content=answer
+    )
+    db.add(user_message)
+    db.commit()
+    db.refresh(session)
+
+    history = build_conversation_history(session)
+    next_question = get_ai_response(
+        resume_text=session.resume_text,
+        conversation_history=history
+    )
+
+    ai_message = InterviewMessage(
+        session_id=session.id,
+        role="assistant",
+        content=next_question
+    )
+    db.add(ai_message)
+    db.commit()
 
     return {
-        "ai": ai_response,
-        "questions_asked": len([m for m in sessions[current_user.id] if m["role"] == "assistant"])
+        "session_id": session.id,
+        "message": next_question
     }
 
 
 @router.get("/history")
 def get_history(
-    current_user: User = Depends(get_current_user)
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    if current_user.id not in sessions:
-        return {"history": []}
+    session = db.query(InterviewSession).filter(
+        InterviewSession.id == session_id,
+        InterviewSession.user_id == current_user.id
+    ).first()
 
-    return {"history": sessions[current_user.id]}
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found.")
+
+    return {
+        "session_id": session.id,
+        "status": session.status,
+        "messages": build_conversation_history(session)
+    }
 
 
 @router.post("/end")
 def end_interview(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    if current_user.id not in sessions:
-        raise HTTPException(
-            status_code=400,
-            detail="No active interview session found."
-        )
+    session_id = payload.get("session_id")
 
-    history = sessions[current_user.id]
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id is required.")
 
-    if len(history) < 2:
-        raise HTTPException(
-            status_code=400,
-            detail="Interview too short to summarize. Answer at least one question."
-        )
+    session = db.query(InterviewSession).filter(
+        InterviewSession.id == session_id,
+        InterviewSession.user_id == current_user.id
+    ).first()
 
-    summary = get_interview_summary(current_user.resume_text, history)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found.")
 
-    del sessions[current_user.id]
+    if session.status == "ended":
+        raise HTTPException(status_code=400, detail="Session already ended.")
+
+    history = build_conversation_history(session)
+    summary = get_interview_summary(
+        resume_text=session.resume_text,
+        conversation_history=history
+    )
+
+    session.status = "ended"
+    session.summary = summary
+    session.ended_at = datetime.now(timezone.utc)
+    db.commit()
 
     return {
-        "message": "Interview completed!",
-        "questions_asked": len([m for m in history if m["role"] == "assistant"]),
+        "session_id": session.id,
         "summary": summary
     }

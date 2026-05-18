@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
 from sqlalchemy.sql import func
-
+from sqlalchemy.orm import relationship
 from app.database import Base
 
 class User(Base):
@@ -16,6 +16,8 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
 
     resume_text = Column(Text, nullable=True) 
+
+    sessions = relationship("InterviewSession", back_populates="user")
     
     is_active = Column(Boolean, default=True)
     

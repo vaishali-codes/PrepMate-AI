@@ -2,9 +2,15 @@ from fastapi import FastAPI
 from fastapi.security import OAuth2PasswordBearer
 
 from app.config import settings
+
+# models first
+from app.models.user import User
+from app.models.interview import InterviewSession, InterviewMessage
+
+# routers after models
 from app.routers.auth import router as auth_router
 from app.routers.resume import router as resume_router
-from app.routers.interview import router as interview_router
+from app.routers.interview import router as interview_router  # ✅ was missing!
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 

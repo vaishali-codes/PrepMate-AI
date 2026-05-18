@@ -8,6 +8,7 @@ from app.database import Base
 # Import all models so Alembic can detect them
 # Every new model you create must be imported here
 from app.models.user import User
+from app.models.interview import InterviewSession, InterviewMessage
 
 from sqlalchemy import pool
 

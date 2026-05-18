@@ -28,3 +28,5 @@ Thumbs.db
 .pytest_cache/
 htmlcov/
 .coverage
+app.log
+test_resume.pdf
